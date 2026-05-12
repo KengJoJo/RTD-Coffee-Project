@@ -1,0 +1,7 @@
+Column,Reason
+ถ้ามีแบรนด์กาแฟพร้อมดื่ม (Ready to drink) ออกใหม่ คุณจะลองหรือไม่,Direct Target Column
+trial_text,Contains reason for trial (Direct leakage)
+review_interest,Feature derived from target question text
+sampling_interest,Feature derived from target question text
+promotion_interest,Feature derived from target question text
+advertising_interest,Feature derived from target question text

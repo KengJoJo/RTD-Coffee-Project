@@ -1,0 +1,9 @@
+=== Classification Report ===
+              precision    recall  f1-score   support
+
+    No Trial       0.67      0.25      0.36         8
+       Trial       0.82      0.96      0.89        28
+
+    accuracy                           0.81        36
+   macro avg       0.74      0.61      0.62        36
+weighted avg       0.78      0.81      0.77        36
