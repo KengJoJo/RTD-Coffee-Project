@@ -14,13 +14,20 @@ st.set_page_config(page_title="RTD Coffee Predictor", page_icon="☕", layout="w
 st.title("☕ Coffee RTD Trial Predictor (Academic Prototype)")
 st.info("⚠️ **หมายเหตุ:** แอปพลิเคชันนี้เป็น Prototype สำหรับการนำเสนอวิชา AIE322-325 เท่านั้น ข้อมูลที่กรอกจะถูกนำไปใช้ทำนายผ่านโมเดล Machine Learning ที่ฝึกสอนจากข้อมูลแบบสอบถามจริง")
 
+@st.cache_resource(show_spinner="กำลังโหลดโมเดล...")
 def load_assets():
-    if not MODEL_PATH.exists() or not FEAT_COLS_PATH.exists(): return None, None
-    with open(MODEL_PATH, "rb") as f: pipeline = pickle.load(f)
-    with open(FEAT_COLS_PATH, "r") as f: feat_cols = json.load(f)
-    return pipeline, feat_cols
+    if not MODEL_PATH.exists() or not FEAT_COLS_PATH.exists():
+        return None, None, "ไม่พบไฟล์โมเดลหรือไฟล์ feature columns"
+    try:
+        with open(MODEL_PATH, "rb") as f:
+            pipeline = pickle.load(f)
+        with open(FEAT_COLS_PATH, "r", encoding="utf-8") as f:
+            feat_cols = json.load(f)
+        return pipeline, feat_cols, None
+    except Exception as exc:
+        return None, None, exc
 
-pipeline, feat_cols = load_assets()
+pipeline, feat_cols, load_error = load_assets()
 
 AGE_LABELS = ["<18", "18-22", "23-29", "30-39", "40-49", "50-59", "60+"]
 INCOME_LABELS = ["<10k", "10-15k", "15-20k", "20-30k", "30-40k", "40-50k", "50-60k", "60k+"]
@@ -64,7 +71,11 @@ def get_knn_vote_summary(model_pipeline, input_df):
         "avg_distance": float(distances[0].mean()),
     }
 
-if pipeline is None:
+if load_error is not None:
+    st.error("❌ โหลดโมเดลไม่สำเร็จ")
+    st.exception(load_error)
+    st.stop()
+elif pipeline is None:
     st.error("❌ ไม่พบไฟล์โมเดล! โปรดรันสคริปต์ 01-04 ในเครื่องก่อน")
 else:
     gender_options = feature_categories("gender_")

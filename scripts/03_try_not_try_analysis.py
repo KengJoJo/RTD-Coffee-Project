@@ -89,7 +89,7 @@ def run_analysis():
 
     # 5.2 Age Distribution
     plt.figure(figsize=(8, 5))
-    sns.countplot(y="age", data=df, order=df["age"].value_counts().index, palette="Blues_d")
+    sns.countplot(y="age", data=df, order=df["age"].value_counts().index, color="#4C72B0")
     plt.title("การกระจายตัวของช่วงอายุ (Age Distribution)")
     plt.xlabel("จำนวนคน")
     plt.ylabel("ช่วงอายุ")
@@ -111,10 +111,54 @@ def run_analysis():
     def wrap_labels(labels, width=40):
         return [textwrap.fill(str(label), width=width) for label in labels]
 
+    def clean_no_trial_reason(reason):
+        reason = str(reason).strip()
+        if not reason or reason.lower() == "nan":
+            return None
+        if "ไม่ลอง" in reason:
+            return "ไม่ลอง"
+        return None
+
+    def save_no_trial_single_bar_chart(no_trial_count, total_count):
+        no_trial_pct = no_trial_count / total_count * 100 if total_count else 0
+        fig, ax = plt.subplots(figsize=(9, 3.8))
+        ax.barh(
+            ["ไม่ลอง\n(ไม่ได้ระบุเหตุผลย่อย)"],
+            [no_trial_count],
+            height=0.34,
+            color="#cf3f38",
+        )
+        ax.text(
+            no_trial_count + max(no_trial_count * 0.03, 0.5),
+            0,
+            f"{no_trial_count:,} คน ({no_trial_pct:.1f}%)",
+            va="center",
+            fontsize=13,
+            color="#111111",
+        )
+        ax.set_title("คำตอบของกลุ่มที่ไม่อยากลองสินค้าใหม่", fontsize=16, pad=16)
+        ax.set_xlabel("จำนวนผู้ตอบ")
+        ax.set_ylabel("คำตอบในแบบสอบถาม")
+        ax.set_ylim(-0.55, 0.55)
+        ax.set_xlim(0, max(no_trial_count * 1.25, 1))
+        ax.grid(axis="x", linestyle="--", alpha=0.25)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        fig.text(
+            0.12, 0.03,
+            "หมายเหตุ: แบบสอบถามไม่ได้มีตัวเลือกเหตุผลย่อยของการไม่ลอง จึงสรุปได้แค่ขนาดของกลุ่ม No Trial",
+            fontsize=11,
+            color="#666666",
+        )
+        plt.tight_layout(rect=[0, 0.08, 1, 1])
+        plt.savefig(FIG_DIR / "reason_not_to_try.png", bbox_inches="tight", dpi=160)
+        plt.close()
+
     # 5.4 Reason to Try / Not Try
     # เหตุผลที่อยากลอง
     plt.figure(figsize=(10, 6))
-    sns.barplot(x=top_reasons.values, y=wrap_labels(top_reasons.index), palette="Greens_d")
+    sns.barplot(x=top_reasons.values, y=wrap_labels(top_reasons.index), color="#3f8f54")
     plt.title("เหตุผลหลักที่กลุ่มเป้าหมายอยากลองสินค้าใหม่ (Reasons to Try)")
     plt.xlabel("จำนวนคนที่เลือกเหตุผลนี้")
     plt.savefig(FIG_DIR / "reason_to_try.png", bbox_inches="tight")
@@ -125,15 +169,20 @@ def run_analysis():
     no_trial_df["target_trial_reason_list"] = no_trial_df["target_trial_reason"].str.split(',')
     exploded_no_trial_df = no_trial_df.explode("target_trial_reason_list")
     exploded_no_trial_df["target_trial_reason_list"] = exploded_no_trial_df["target_trial_reason_list"].str.strip()
+    exploded_no_trial_df["target_trial_reason_clean"] = exploded_no_trial_df["target_trial_reason_list"].apply(clean_no_trial_reason)
     
-    no_trial_reasons = exploded_no_trial_df["target_trial_reason_list"].value_counts()
+    no_trial_reasons = exploded_no_trial_df["target_trial_reason_clean"].dropna().value_counts()
     if len(no_trial_reasons) > 0:
-        plt.figure(figsize=(10, 6))
-        sns.barplot(x=no_trial_reasons.values, y=wrap_labels(no_trial_reasons.index), palette="Reds_d")
-        plt.title("เหตุผลหลักที่กลุ่มเป้าหมายไม่อยากลองสินค้าใหม่ (Reasons NOT to Try)")
-        plt.xlabel("จำนวนคนที่เลือกเหตุผลนี้")
-        plt.savefig(FIG_DIR / "reason_not_to_try.png", bbox_inches="tight")
-        plt.close()
+        if len(no_trial_reasons) == 1:
+            save_no_trial_single_bar_chart(no_trial_reasons.iloc[0], len(df))
+        else:
+            plt.figure(figsize=(9, 4.5))
+            sns.barplot(x=no_trial_reasons.values, y=wrap_labels(no_trial_reasons.index, width=35), palette="Reds_d")
+            plt.title("เหตุผลหลักที่กลุ่มเป้าหมายไม่อยากลองสินค้าใหม่")
+            plt.xlabel("จำนวนคนที่เลือกเหตุผลนี้")
+            plt.ylabel("เหตุผล")
+            plt.savefig(FIG_DIR / "reason_not_to_try.png", bbox_inches="tight")
+            plt.close()
 
     # 5.5 Correlation Heatmap (ดูความสัมพันธ์ของฟีเจอร์ก่อนเข้าโมเดล)
     plt.figure(figsize=(14, 12))
@@ -168,17 +217,15 @@ def run_analysis():
         plt.savefig(FIG_DIR / "reason_to_try_by_income.png", bbox_inches="tight")
         plt.close()
 
-    # 5.7 Cross-Analysis: Reason NOT to Try by Income
-    if len(exploded_no_trial_df) > 0 and "income" in exploded_no_trial_df.columns:
-        plt.figure(figsize=(12, 8))
-        top_5_no_reasons = exploded_no_trial_df["target_trial_reason_list"].value_counts().nlargest(5).index
-        plot_no_df = exploded_no_trial_df[exploded_no_trial_df["target_trial_reason_list"].isin(top_5_no_reasons)].copy()
-        plot_no_df["target_trial_reason_wrap"] = wrap_labels(plot_no_df["target_trial_reason_list"])
-        sns.countplot(y="target_trial_reason_wrap", hue="income", data=plot_no_df, palette="magma")
-        plt.title("เหตุผลที่ไม่อยากลองสินค้า แยกตามกลุ่มรายได้")
-        plt.xlabel("จำนวนคนที่เลือกเหตุผลนี้")
-        plt.ylabel("เหตุผล")
-        plt.legend(title="รายได้ (Income)", bbox_to_anchor=(1.05, 1), loc='upper left')
+    # 5.7 No Trial Distribution by Income
+    # แบบสอบถามไม่มีเหตุผลเชิงลึกของกลุ่ม No Trial จึงแสดงจำนวน No Trial ตามรายได้แทน
+    if len(no_trial_df) > 0 and "income" in no_trial_df.columns:
+        no_trial_income = no_trial_df["income"].value_counts()
+        plt.figure(figsize=(10, 5))
+        sns.barplot(x=no_trial_income.values, y=wrap_labels(no_trial_income.index, width=24), color="#cf3f38")
+        plt.title("จำนวนผู้ตอบ No Trial แยกตามกลุ่มรายได้")
+        plt.xlabel("จำนวนผู้ตอบ No Trial")
+        plt.ylabel("รายได้")
         plt.savefig(FIG_DIR / "reason_not_to_try_by_income.png", bbox_inches="tight")
         plt.close()
 
