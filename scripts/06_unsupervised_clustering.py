@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
@@ -73,6 +76,17 @@ def run_clustering():
     
     cluster_profile = profile_df.groupby('cluster').mean()
     cluster_counts = profile_df['cluster'].value_counts().sort_index()
+    cluster_summary = (
+        pd.DataFrame(
+            {
+                "cluster": cluster_counts.index,
+                "count": cluster_counts.values,
+                "try_rate": cluster_profile.loc[cluster_counts.index, "target_trial"].values * 100,
+            }
+        )
+        .sort_values("cluster")
+        .reset_index(drop=True)
+    )
 
     # Heatmap สรุปบุคลิกแต่ละ Cluster
     plt.figure(figsize=(12, 6))
@@ -121,6 +135,8 @@ Profile นี้อ้างอิงเฉพาะฟีเจอร์ที
 
     # Export CSV สำหรับตรวจสอบตัวเลขละเอียด
     cluster_profile.to_csv(OUTPUT_DIR / "cluster_profile_details.csv")
+    cluster_summary.to_csv(OUTPUT_DIR / "cluster_summary.csv", index=False)
+    profile_df.to_csv(OUTPUT_DIR / "cluster_assignments.csv", index=False)
     
     print(f"--- Clustering สำเร็จ บันทึก Profile สรุปกลุ่มลูกค้าใน {OUTPUT_DIR} ---")
 
