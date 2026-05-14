@@ -674,7 +674,7 @@ st.write(
 tab_overview, tab_persona, tab_segment, tab_recommendation = st.tabs(
     [
         "Overview",
-        "Segment Profile Explorer",
+        "โปรไฟล์กลุ่มลูกค้า",
         "Segment Match",
         "Business Recommendation",
     ]
@@ -775,7 +775,7 @@ with tab_overview:
     st.caption("หมายเหตุ: ผลลัพธ์นี้อ้างอิงจากข้อมูลแบบสอบถามในโปรเจค")
 
 with tab_persona:
-    st.header("Segment Profile Explorer")
+    st.header("โปรไฟล์กลุ่มลูกค้า")
     st.write(
         "เลือกกลุ่มลูกค้าจากผลการแบ่งกลุ่ม เพื่อดูโปรไฟล์จริงของแต่ละกลุ่มและแนวโน้มการเปิดรับกาแฟ RTD"
     )
@@ -847,7 +847,14 @@ with tab_persona:
                     metric_card("No Trial Tendency", f"{(1 - probability) * 100:.1f}%")
                 with model_cols[2]:
                     metric_card("ระดับแนวโน้ม", tendency_level(probability))
-                st.caption(f"{tendency_source} ไม่ใช่การทำนายลูกค้ารายบุคคล")
+                if tendency_source == "ค่าเฉลี่ยผลโมเดลของสมาชิกใน Cluster นี้":
+                    st.caption(
+                        "ค่านี้คำนวณจากสมาชิกจริงใน cluster ที่เลือก ไม่ใช่ข้อมูล persona ที่ผู้ใช้สร้างขึ้นเอง"
+                    )
+                else:
+                    st.caption(
+                        "ค่านี้คำนวณจากโปรไฟล์เฉลี่ยของ cluster ที่เลือก ไม่ใช่ข้อมูล persona ที่ผู้ใช้สร้างขึ้นเอง"
+                    )
 
         st.subheader("Supervised Model Result")
         st.write(

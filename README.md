@@ -1,32 +1,74 @@
-# ☕ Coffee RTD Market Entry ML Pipeline (Case 3 Alignment)
+# Coffee RTD Consumer Insight Dashboard & ML Pipeline
 
-โปรเจควิเคราะห์พฤติกรรมผู้บริโภคและทำนายแนวโน้มการลองกาแฟพร้อมดื่ม (RTD) เพื่อสนับสนุนการวางแผนกลยุทธ์การตลาด โดยเน้นความถูกต้องทางวิชาการและการอธิบายผลลัพธ์อย่างเหมาะสมกับข้อมูลแบบสอบถาม
+โปรเจคนี้ใช้ข้อมูลแบบสอบถามเกี่ยวกับกาแฟพร้อมดื่ม (RTD) เพื่อวิเคราะห์พฤติกรรมการลองสินค้า แบ่งกลุ่มลูกค้า และสรุปข้อเสนอแนะเบื้องต้นสำหรับการสื่อสารทางการตลาด
 
-## 📊 Workflow Diagram
+เป้าหมายของเว็บไม่ใช่แบบทดสอบสำหรับลูกค้าทั่วไป แต่เป็น dashboard สำหรับสรุปผลวิเคราะห์จากข้อมูลแบบสอบถามและผลโมเดลในโปรเจค
+
+## Workflow
+
 ```mermaid
 graph TD
-    A[BU_Data_from_Survey.csv] --> B[01_data_audit.py]
-    B --> C[02_preprocessing_common.py]
-    C -->|Cleaned Data| D[03_try_not_try_analysis.py]
-    C -->|Final Supervised| E[04_supervised_train_compare.py]
-    E --> F[05_supervised_evaluate.py]
-    C -->|Final Unsupervised| G[06_unsupervised_clustering.py]
-    C -->|Cleaned Readable| H[07_brief_alignment_analysis.py]
-    H --> I[Campaign Strategy Summary]
+    A[Survey Data] --> B[01 Data Audit]
+    B --> C[02 Data Cleaning & Preprocessing]
+    C --> D[03 Try vs No Trial Analysis]
+    C --> E[04 Supervised Learning]
+    E --> F[05 Model Evaluation]
+    C --> G[06 Unsupervised Clustering]
+    C --> H[07 Marketing Insight Analysis]
+    D --> I[Streamlit Dashboard]
+    F --> I
+    G --> I
+    H --> I
+    I --> J[Business Recommendation]
 ```
 
-## 🚀 โครงสร้างไฟล์ที่ใช้ส่งงาน (Pipeline Scripts)
-- `01_data_audit.py`: ตรวจสอบความสมบูรณ์และโครงสร้างข้อมูล
-- `02_preprocessing_common.py`: รองรับโครงสร้างแบบสอบถามและค้นหาคอลัมน์อัตโนมัติ
-- `03_try_not_try_analysis.py`: วิเคราะห์พฤติกรรมการลอง (Try vs No Trial EDA)
-- `04_supervised_train_compare.py`: เปรียบเทียบและฝึกสอนโมเดลทำนาย
-- `05_supervised_evaluate.py`: ประเมินผลโมเดลและสรุปประสิทธิภาพ (XAI)
-- `06_unsupervised_clustering.py`: แบ่งกลุ่มลูกค้าเป้าหมาย (Customer Segmentation)
-- `07_brief_alignment_analysis.py`: วิเคราะห์สื่อและช่องทางเพื่อวางแผนแคมเปญ
-- `app/streamlit_app.py`: เว็บแอปพลิเคชันต้นแบบสำหรับสาธิตการทำนาย (Prototype Demo)
+## Main Project Sections
 
-## 🛠️ วิธีรันโปรเจค
+1. **Dataset / Data Collection**  
+   ใช้ข้อมูลแบบสอบถามผู้บริโภคกาแฟ RTD โดยมีข้อมูลที่ใช้สรุปภาพรวม 181 แถว และชุดข้อมูลสำหรับโมเดล 118 แถว
+
+2. **Data Cleaning & Preprocessing**  
+   ทำความสะอาดข้อมูล แปลงข้อมูล categorical เป็น one-hot encoding แปลงช่วงอายุ/รายได้เป็น ordinal และเตรียมชุดข้อมูลสำหรับ supervised และ unsupervised learning
+
+3. **EDA / Try vs No Trial Analysis**  
+   วิเคราะห์ความแตกต่างระหว่างกลุ่ม Trial และ No Trial เช่น รายได้ เหตุผลที่อยากลอง ปัจจัยสินค้า ช่องทางสื่อ และช่องทางซื้อสินค้า
+
+4. **Supervised Learning**  
+   เปรียบเทียบโมเดล Logistic Regression, KNN, Decision Tree และ Random Forest โดยเลือกโมเดลจาก F1-score เป็นหลัก เนื่องจากข้อมูล Trial / No Trial ไม่สมดุล
+
+5. **Unsupervised Learning**  
+   ใช้ K-Means เพื่อแบ่งลูกค้าเป็น 4 clusters และนำผล Trial / No Trial กลับมาประกอบการแปลผลของแต่ละกลุ่ม
+
+6. **Dashboard & Business Insight**  
+   ใช้ Streamlit แสดงภาพรวมข้อมูล ผล supervised model ผล segmentation และข้อเสนอแนะทางการตลาดจาก evidence ในข้อมูลจริง
+
+## File Structure
+
+- `scripts/01_data_audit.py`: ตรวจสอบโครงสร้างข้อมูลและ missing values
+- `scripts/02_preprocessing_common.py`: เตรียมข้อมูลสำหรับการวิเคราะห์และ machine learning
+- `scripts/03_try_not_try_analysis.py`: วิเคราะห์ Try vs No Trial และสร้างกราฟ EDA
+- `scripts/04_supervised_train_compare.py`: ฝึกและเปรียบเทียบโมเดล supervised learning
+- `scripts/05_supervised_evaluate.py`: ประเมินโมเดลและสร้าง output สำหรับอธิบายผล
+- `scripts/06_unsupervised_clustering.py`: แบ่งกลุ่มลูกค้าด้วย K-Means และ export cluster profile
+- `scripts/07_brief_alignment_analysis.py`: วิเคราะห์ช่องทางสื่อ/ช่องทางซื้อและสรุป insight ทางการตลาด
+- `app/streamlit_app.py`: Coffee RTD Consumer Insight Dashboard
+
+## Dashboard Tabs
+
+- **Overview**: สรุปจำนวนข้อมูล Trial / No Trial, data flow, EDA charts และคำตอบเบื้องต้นจากข้อมูล
+- **โปรไฟล์กลุ่มลูกค้า**: เลือกดูโปรไฟล์จริงของแต่ละ cluster พร้อมจำนวนคน Try Rate ปัจจัยเด่น และแนวโน้มจากโมเดลของกลุ่มนั้น
+- **Segment Match**: แสดงภาพรวม segmentation, Try Rate by Cluster, PCA plot, heatmap และข้อมูลประกอบการเลือก K
+- **Business Recommendation**: สรุป evidence และข้อเสนอแนะเบื้องต้นสำหรับ target group, message, channel และ activation
+
+## How to Run
+
 รันคำสั่งจากโฟลเดอร์ `coffee-rtd-ml-project`
+
+```bash
+pip install -r requirements.txt
+```
+
+รัน pipeline:
 
 ```bash
 python scripts/01_data_audit.py
@@ -38,22 +80,25 @@ python scripts/06_unsupervised_clustering.py
 python scripts/07_brief_alignment_analysis.py
 ```
 
-รัน Streamlit prototype:
+รัน dashboard:
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-## 💡 สรุปผลการค้นพบที่สำคัญ (Key Findings)
-- **Trial Driver หลัก:** การใช้ **Product Sampling** (การแจกให้ชิม) เป็นปัจจัยสำคัญที่สุดที่กระตุ้นให้เกิดการลอง
-- **กลุ่มเป้าหมายเชิงประชากร:** กลุ่มที่มีรายได้ **20,000–29,999 บาท** มีอัตราการลอง (Try Rate) สูงที่สุดในกลุ่มที่มีจำนวนตัวอย่างเพียงพอ
-- **ปัจจัยดึงดูดใจ (Key Differentiator):** ผู้บริโภคสนใจเพราะมองว่า **"ประหยัดกว่ากินกาแฟสดตามร้าน"** แต่ยังต้องการคุณภาพที่ใกล้เคียงเดิม
-- **ช่องทางสื่อหลัก (Media Channel):** **Social Media (โดยเฉพาะ Facebook)** เป็นช่องทางที่กลุ่มเป้าหมายพบเห็นสื่อมากที่สุด
-- **จุดสัมผัสลูกค้า (Touchpoint):** **ร้านสะดวกซื้อ (7-11)** เป็นช่องทางการจัดจำหน่าย (Purchase / Sales Touchpoint) ที่สำคัญที่สุดในการเข้าถึงลูกค้า
-- **กลุ่มศักยภาพสูง (Segmentation):** **Cluster 2** คือกลุ่ม "Best Segment" ที่มีความโน้มเอียงในการลองสินค้าใหม่สูงสุด (Try Rate 91.7%)
+## Key Findings
 
-## 📊 หมายเหตุทางเทคนิค
-- โมเดลวิเคราะห์เฉพาะผู้ที่ดื่มกาแฟเท่านั้น (`is_drinker_binary == 1`)
-- โมเดลเหมาะกับการทำ **Positive Screening** (การค้นหากลุ่ม Trial) เพราะ Recall ของกลุ่ม Trial สูงใน test set
-- ปัญหา Class Imbalance เป็นปัจจัยที่ทำให้การจำแนกกลุ่ม No Trial มีข้อจำกัด จึงไม่ควรสรุปว่าโมเดลแม่นยำเท่ากันทุกกลุ่ม
-- Streamlit app เป็น prototype สำหรับการนำเสนอ ไม่ใช่ production system
+- **Trial / No Trial:** ชุดข้อมูลสำหรับโมเดลมี Trial 92 คน และ No Trial 26 คน
+- **Trial Driver:** การแจกชิม / ทดลองสินค้า เป็นปัจจัยสำคัญที่ช่วยกระตุ้นการลองสินค้า
+- **Income Insight:** กลุ่มรายได้ 20,000-29,999 บาท เป็นกลุ่มที่น่าสนใจในข้อมูลชุดนี้
+- **Segmentation:** Cluster 2 มี Try Rate สูงที่สุด 91.7% แต่มีจำนวนตัวอย่าง 12 คน จึงควรตีความเป็นกลุ่มศักยภาพเบื้องต้น
+- **Cluster 2 Profile:** ให้ความสำคัญกับกลิ่นหอมกาแฟ คนใกล้ตัว และแพ็กเกจ / ขวดสวย
+- **Channel / Touchpoint:** สื่อสังคมออนไลน์เหมาะกับการสร้างการรับรู้ ส่วนร้านสะดวกซื้อเหมาะเป็นจุดกระตุ้นการซื้อ
+
+## Technical Notes
+
+- Supervised model ใช้สำหรับประเมินแนวโน้ม Trial / No Trial จากข้อมูลแบบสอบถาม ไม่ใช่การฟันธงลูกค้ารายบุคคล
+- KNN ถูกปรับด้วย GridSearchCV และใช้ F1-score เป็นเกณฑ์หลักในการเปรียบเทียบ
+- หน้า dashboard ใช้ข้อมูลจริงจาก survey, EDA output, model output และ cluster profile เป็นหลัก
+- ส่วนทดลองปรับค่า persona ในเว็บเป็น optional และไม่ถูกใช้เป็นหลักฐานใน Business Recommendation
+- ข้อเสนอแนะในโปรเจคนี้เป็นการวิเคราะห์เบื้องต้นจากข้อมูลแบบสอบถาม หากนำไปใช้จริงควรเก็บข้อมูลเพิ่มและทดลองแคมเปญจริงก่อนตัดสินใจ
